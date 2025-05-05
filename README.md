@@ -12,6 +12,8 @@ This repository specifically houses the client and server components that facili
 
 The client included in the project is only for testing how the code works; we recommend using [Claude Desktop](https://claude.ai/download) or developing your own custom client.
 
+> ***REMEMBER, THIS REPO IS WORK IN PROGRESS, SOME FEATURES MAY NOT BE PERFECT.***
+
 
 ## Technology Stack
 
