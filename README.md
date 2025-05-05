@@ -4,7 +4,7 @@
 
 ## Overview
 
-This project provides a set of tools for retrieving information about SonarQube projects using the FastMCP (Fast Message Communication Protocol) framework. It serves as an interface to SonarQube, allowing users to programmatically access metrics, historical data, and component tree metrics for specified projects. This automated access enables reporting, analysis, and integration of SonarQube data with other systems.
+This project provides a set of tools for retrieving information about SonarQube projects using the FastMCP (Fast Model Context Protocol) framework. It serves as an interface to SonarQube, allowing users to programmatically access metrics, historical data, and component tree metrics for specified projects. This automated access enables reporting, analysis, and integration of SonarQube data with other systems.
 
 The project distinguishes itself by offering a simplified, message-based approach to interacting with the SonarQube API, abstracting away the complexities of direct API calls and data handling. It's designed for developers, DevOps engineers, and analysts who need to incorporate SonarQube data into their workflows or build custom reporting solutions.
 
