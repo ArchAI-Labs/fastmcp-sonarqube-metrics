@@ -1,20 +1,13 @@
 [project]
-name = "sonarqube_analyzer"
-version = "0.1.0"
-description = "MCP server to fetch SonarQube metrics and email them."
-authors = [{ name = "Your Name", email = "your@email.com" }]
-requires-python = ">=3.10"
+name = "fastmcp-sonarqube-metrics"
+version = "0.0.1"
+description = "An MCP server that interacts with SonarQube for metrics."
+readme = "README.md"
+requires-python = ">=3.11"
 dependencies = [
-    "fastmcp>=2.0.0", # Or the specific version you have
-    "httpx>=0.25.0",
-    "pydantic-settings>=2.0.0",
-    "pydantic[email]>=2.11.4", # Needed by pydantic-settings for .env
-    "python-dotenv>=1.0.0",
+    "fastmcp>=2.2.7",
+    "httpx>=0.28.1",
+    "mcp[cli]>=1.7.1",
+    "pydantic>=2.11.4",
+    "python-dotenv>=1.1.0",
 ]
-
-[project.scripts]
-sonarqube-analyzer = "sonarqube_analyzer.__main__:main"
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
