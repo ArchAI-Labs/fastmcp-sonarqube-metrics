@@ -14,6 +14,12 @@ The client included in the project is only for testing how the code works; we re
 
 > ***REMEMBER, THIS REPO IS WORK IN PROGRESS, SOME FEATURES MAY NOT BE PERFECT.***
 
+## Supported MCP Tools
+
+* `list_projects`: Lists all accessible SonarQube projects, optionally filtered by name or key.
+* `get_sonarqube_metrics`: Retrieves specified metrics (bugs, vulnerabilities, code smells, coverage, duplication density) for a given SonarQube project key.
+* `get_sonarqube_metrics_history`: Retrieves historical metrics (bugs, vulnerabilities, code smells, coverage, duplication density) for a given SonarQube project using /api/measures/search_history. Optional date filters can be applied.
+* `get_sonarqube_component_tree_metrics`: Retrieves metric values for all components (e.g., files or directories) in a project using /api/measures/component_tree Automatically handles pagination to retrieve all results.
 
 ## Technology Stack
 
