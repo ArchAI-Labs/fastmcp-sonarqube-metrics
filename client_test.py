@@ -25,6 +25,60 @@ async def run_test(project_key: str):
     # The client automatically uses PythonStdioTransport for .py files
     client = Client(SERVER_SCRIPT_PATH)
 
+
+    try:
+        async with client:
+            print("Connection established.")
+            print(
+                f"Calling tool 'list_projects'..."
+            )
+
+            # Call the tool
+            result = await client.call_tool(
+                "list_projects",
+                {},
+            )
+
+            print("\n--- Tool Result ---")
+            if not result:
+                print("Received empty result from the tool.")
+                return
+
+            # Process the result (expecting TextContent with JSON)
+            content = result[0]
+            if isinstance(content, TextContent):
+                print("Raw response text:")
+                print(content.text)
+                try:
+                    # Try parsing the JSON for pretty printing
+                    metrics = json.loads(content.text)
+                    print("\nParsed Metrics:")
+                    print(json.dumps(metrics, indent=2))
+                except json.JSONDecodeError:
+                    print("\nWARNING: Response text was not valid JSON.")
+            else:
+                print(f"Received unexpected content type: {type(content)}")
+                print(f"Content: {content!r}")
+
+    except ClientError as e:
+        print(f"\n--- MCP Client Error ---")
+        # Errors from the tool (like ValueError) are wrapped in ClientError
+        print(f"Error: {e}")
+        print(
+            "Check the server logs and ensure the project key is correct and accessible."
+        )
+    except FileNotFoundError:
+        print(f"ERROR: Server script '{SERVER_SCRIPT_PATH}' not found.")
+    except Exception as e:
+        print(f"\n--- An Unexpected Error Occurred ---")
+        print(f"Error type: {type(e).__name__}")
+        print(f"Error details: {e}")
+        print(
+            "Check if the server script can run independently and if dependencies are met."
+        )
+
+    print("\n--- Test Complete ---")
+
     try:
         async with client:
             print("Connection established.")
@@ -76,6 +130,64 @@ async def run_test(project_key: str):
         )
 
     print("\n--- Test Complete ---")
+
+    try:
+        async with client:
+            print("Connection established.")
+            print(
+                f"Calling tool 'get_sonarqube_metrics_history' for project '{project_key}'..."
+            )
+
+            # Call the tool
+            result = await client.call_tool(
+                "get_sonarqube_metrics_history",
+                {
+                    "project_key": project_key,
+                    "from_date":"2024-01-01",
+                    "to_date":"2024-12-31"
+                },
+            )
+
+            print("\n--- Tool Result ---")
+            if not result:
+                print("Received empty result from the tool.")
+                return
+
+            # Process the result (expecting TextContent with JSON)
+            content = result[0]
+            if isinstance(content, TextContent):
+                print("Raw response text:")
+                print(content.text)
+                try:
+                    # Try parsing the JSON for pretty printing
+                    metrics = json.loads(content.text)
+                    print("\nParsed Metrics:")
+                    print(json.dumps(metrics, indent=2))
+                except json.JSONDecodeError:
+                    print("\nWARNING: Response text was not valid JSON.")
+            else:
+                print(f"Received unexpected content type: {type(content)}")
+                print(f"Content: {content!r}")
+
+    except ClientError as e:
+        print(f"\n--- MCP Client Error ---")
+        # Errors from the tool (like ValueError) are wrapped in ClientError
+        print(f"Error: {e}")
+        print(
+            "Check the server logs and ensure the project key is correct and accessible."
+        )
+    except FileNotFoundError:
+        print(f"ERROR: Server script '{SERVER_SCRIPT_PATH}' not found.")
+    except Exception as e:
+        print(f"\n--- An Unexpected Error Occurred ---")
+        print(f"Error type: {type(e).__name__}")
+        print(f"Error details: {e}")
+        print(
+            "Check if the server script can run independently and if dependencies are met."
+        )
+
+    print("\n--- Test Complete ---")
+
 
     try:
         async with client:

@@ -106,6 +106,9 @@ async def get_sonarqube_metrics(
             elif e.response.status_code == 401:
                  logger.error("SonarQube authentication failed (401). Check token.")
                  raise PermissionError("SonarQube authentication failed. Check token.") from e
+            elif e.response.status_code == 403:
+                logger.error("SonarQube authentication failed (403). Access denied: Token doesn't have permission. Check roles.")
+                raise PermissionError("SonarQube authentication failed. Access denied: Token doesn't have permission. Check roles.") from e
             else:
                 logger.error(f"SonarQube API request failed: {e.response.status_code} - {e.response.text}")
                 raise RuntimeError(f"SonarQube API error: {e.response.status_code}") from e
@@ -154,7 +157,7 @@ async def get_sonarqube_metrics_history(
             for metric in keys_to_fetch:
                 params = {
                     "component": project_key,
-                    "metric": metric,
+                    "metrics": metric,
                     "ps": 10  # Optional: limit to last 10 entries
                 }
 
@@ -185,6 +188,9 @@ async def get_sonarqube_metrics_history(
             elif e.response.status_code == 401:
                 logger.error("SonarQube authentication failed (401). Check token.")
                 raise PermissionError("SonarQube authentication failed. Check token.") from e
+            elif e.response.status_code == 403:
+                logger.error("SonarQube authentication failed (403). Access denied: Token doesn't have permission. Check roles.")
+                raise PermissionError("SonarQube authentication failed. Access denied: Token doesn't have permission. Check roles.") from e
             else:
                 logger.error(f"SonarQube API request failed: {e.response.status_code} - {e.response.text}")
                 raise RuntimeError(f"SonarQube API error: {e.response.status_code}") from e
@@ -284,6 +290,9 @@ async def get_sonarqube_component_tree_metrics(
             elif e.response.status_code == 401:
                 logger.error("Authentication failed (401). Check token.")
                 raise PermissionError("Authentication failed. Check your token.") from e
+            elif e.response.status_code == 403:
+                logger.error("SonarQube authentication failed (403). Access denied: Token doesn't have permission. Check roles.")
+                raise PermissionError("SonarQube authentication failed. Access denied: Token doesn't have permission. Check roles.") from e
             else:
                 logger.error(f"SonarQube API error: {e.response.status_code} - {e.response.text}")
                 raise RuntimeError(f"SonarQube API error: {e.response.status_code}") from e
@@ -294,7 +303,75 @@ async def get_sonarqube_component_tree_metrics(
             logger.error(f"Unexpected error: {e}", exc_info=True)
             raise RuntimeError("Unexpected error during component tree fetch.") from e
 
+@mcp.tool()
+async def list_projects(
+    query: Annotated[str | None, Field(description="Optional substring to filter projects by key or name. Case-insensitive.")] = None
+) -> dict:
+    """Lists all accessible SonarQube projects, optionally filtered by name or key."""
 
+    logger.info("Fetching list of accessible SonarQube projects.")
+
+    if not sonarqube_token:
+        raise ValueError("Missing SonarQube token. Cannot authenticate.")
+
+    base64_token = base64.b64encode(f"{sonarqube_token}:".encode()).decode("utf-8")
+    headers = {
+        "Accept": "application/json",
+        "Authorization": f"Basic {base64_token}"
+    }
+
+    api_url = f"{sonarqube_url}/api/projects/search"
+
+    async with httpx.AsyncClient() as client:
+        try:
+            logger.debug(f"Requesting SonarQube API: {api_url}")
+            response = await client.get(api_url, headers=headers)
+            response.raise_for_status()
+
+            data = response.json()
+            all_projects = data.get("components", [])
+
+            # Apply optional query filter
+            if query:
+                query_lower = query.lower()
+                projects = [
+                    p for p in all_projects
+                    if query_lower in (p.get("name", "").lower() + p.get("key", "").lower())
+                ]
+                logger.info(f"Filtered projects using query: '{query}' — {len(projects)} match(es) found.")
+            else:
+                projects = all_projects
+                logger.info(f"No query filter applied. {len(projects)} total project(s) returned.")
+
+            result = {
+                "total": len(projects),
+                "projects": [
+                    {
+                        "key": p.get("key"),
+                        "name": p.get("name"),
+                        "visibility": p.get("visibility")
+                    } for p in projects
+                ]
+            }
+
+            return result
+
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 401:
+                logger.error("Authentication failed (401). Check token.")
+                raise PermissionError("Authentication failed. Check your token.") from e
+            elif e.response.status_code == 403:
+                logger.error("Access denied (403). Token may lack required permissions.")
+                raise PermissionError("Access denied. Check token roles.") from e
+            else:
+                logger.error(f"SonarQube API error: {e.response.status_code} - {e.response.text}")
+                raise RuntimeError(f"SonarQube API error: {e.response.status_code}") from e
+        except httpx.RequestError as e:
+            logger.error(f"Connection error: {e}")
+            raise ConnectionError(f"Failed to connect to SonarQube at {sonarqube_url}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error while fetching projects: {e}", exc_info=True)
+            raise RuntimeError("An unexpected error occurred while listing projects.") from e
 
 # Standard entry point to run the server
 if __name__ == "__main__":
