@@ -34,7 +34,63 @@ SONARQUBE_METRIC_KEYS = [
 sonarqube_token=os.environ.get("SONARQUBE_TOKEN")
 sonarqube_url=os.environ.get("SONARQUBE_URL")
 
-# Define the tool using the @mcp.tool decorator
+@mcp.tool()
+async def get_status() -> str:
+    """
+    Performs a health check on the configured SonarQube instance using /api/system/status.
+    Returns a readable status message.
+    """
+    api_url = f"{sonarqube_url}/api/system/status"
+
+    if sonarqube_token:
+        base64_token = base64.b64encode(f"{sonarqube_token}:".encode()).decode("utf-8")
+
+    headers = {
+        "Accept": "application/json",
+        "Authorization": f"Basic {base64_token}"
+    }
+
+    async with httpx.AsyncClient() as client:
+        try:
+            logger.info(f"Performing SonarQube health check at: {api_url}")
+            response = await client.get(api_url, headers=headers, timeout=10)
+            response.raise_for_status()
+
+            status = response.json().get("status", "UNKNOWN").upper()
+            logger.info(f"SonarQube status: {status}")
+
+            if status == "UP":
+                return "🟢 SonarQube server is UP and running."
+            elif status == "DOWN":
+                return "🔴 SonarQube server is DOWN."
+            elif status == "RESTARTING":
+                return "🟡 SonarQube server is restarting..."
+            else:
+                return f"⚠️ SonarQube status: {status}"
+            
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 401:
+                logger.error("Authentication failed (401). Check token.")
+                raise PermissionError("Authentication failed. Check your token.") from e
+            elif e.response.status_code == 403:
+                logger.error("Access denied (403). Token may lack required permissions.")
+                raise PermissionError("Access denied. Check token roles.") from e
+            else:
+                logger.error(f"SonarQube API error: {e.response.status_code} - {e.response.text}")
+                raise RuntimeError(f"SonarQube API error: {e.response.status_code}") from e
+
+        except httpx.RequestError as e:
+            logger.error(f"Connection error: {e}")
+            raise ConnectionError(f"Failed to connect to SonarQube at {sonarqube_url}") from e
+
+        except httpx.HTTPStatusError as e:
+            logger.error(f"HTTP error during health check: {e.response.status_code} - {e.response.text}")
+            return f"HTTP error: {e.response.status_code} - {e.response.reason_phrase}"
+
+        except Exception as e:
+            logger.error(f"Unexpected error during health check: {e}", exc_info=True)
+            return f"Unexpected error: {str(e)}"
+
 @mcp.tool()
 async def get_sonarqube_metrics(
     project_key: Annotated[str, Field(description="The unique key of the project in SonarQube (e.g., 'my-org_my-repo').")],
@@ -373,7 +429,103 @@ async def list_projects(
             logger.error(f"Unexpected error while fetching projects: {e}", exc_info=True)
             raise RuntimeError("An unexpected error occurred while listing projects.") from e
 
+
+@mcp.tool()
+async def get_project_issues(
+    project_key: Annotated[str, Field(description="The unique key of the SonarQube project.")],
+    issue_type: Annotated[str | None, Field(description="Filter by issue type (e.g., BUG, CODE_SMELL, VULNERABILITY).")] = None,
+    severity: Annotated[str | None, Field(description="Filter by severity (e.g., INFO, MINOR, MAJOR, CRITICAL, BLOCKER).")] = None,
+    resolved: Annotated[bool, Field(description="Whether to fetch only resolved issues. Default: false.")] = False,
+    limit: Annotated[int, Field(description="Max number of issues to return. Default: 10, Max recommended: 100.")] = 10
+) -> dict:
+    """
+    Fetch SonarQube issues for a given project, optionally filtered by type, severity, and resolution status.
+    Returns up to `limit` results (default: 10).
+    """
+    logger.info(f"Fetching issues for {project_key} | type={issue_type}, severity={severity}, resolved={resolved}, limit={limit}")
+
+    if not project_key:
+        return {"error": "Missing project key."}
+
+    headers = {
+        "Accept": "application/json",
+        "Authorization": f"Basic {base64.b64encode(f'{sonarqube_token}:'.encode()).decode('utf-8')}"
+    }
+
+    issues_url = f"{sonarqube_url}/api/issues/search"
+    params = {
+        "componentKeys": project_key,
+        "resolved": str(resolved).lower(),
+        "ps": min(limit, 500)  # API safety cap
+    }
+
+    if issue_type:
+        params["types"] = issue_type.upper()
+    if severity:
+        params["severities"] = severity.upper()
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(issues_url, headers=headers, params=params, timeout=15)
+            response.raise_for_status()
+
+            data = response.json()
+            issues = data.get("issues", [])
+
+            if not issues:
+                # Double-check if the project exists
+                check_url = f"{sonarqube_url}/api/projects/search"
+                check_response = await client.get(check_url, headers=headers)
+                check_response.raise_for_status()
+
+                known_keys = [p["key"] for p in check_response.json().get("components", [])]
+                if project_key not in known_keys:
+                    return {
+                        "project": project_key,
+                        "error": f"Project '{project_key}' not found. Try one of: {known_keys[:5]}..."
+                    }
+
+            formatted = [{
+                "key": i.get("key"),
+                "severity": i.get("severity"),
+                "type": i.get("type"),
+                "message": i.get("message"),
+                "component": i.get("component"),
+                "line": i.get("line"),
+                "status": i.get("status")
+            } for i in issues]
+
+            return {
+                "project": project_key,
+                "filters": {
+                    "type": issue_type,
+                    "severity": severity,
+                    "resolved": resolved
+                },
+                "total_issues": len(formatted),
+                "issues": formatted[:limit],
+                "has_more": len(formatted) > limit
+            }
+
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 401:
+                logger.error("Authentication failed (401). Check token.")
+                raise PermissionError("Authentication failed. Check your token.") from e
+            elif e.response.status_code == 403:
+                logger.error("Access denied (403). Token may lack required permissions.")
+                raise PermissionError("Access denied. Check token roles.") from e
+            else:
+                logger.error(f"SonarQube API error: {e.response.status_code} - {e.response.text}")
+                raise RuntimeError(f"SonarQube API error: {e.response.status_code}") from e
+        except httpx.RequestError as e:
+            logger.error(f"Connection error: {e}")
+            raise ConnectionError(f"Failed to connect to SonarQube at {sonarqube_url}") from e
+        except Exception as e:
+            logger.error(f"Unexpected error: {e}", exc_info=True)
+            return {"error": f"Unexpected error: {str(e)}"}
+
+
 # Standard entry point to run the server
 if __name__ == "__main__":
     print(f"Starting SonarQube MCP server, configured for {sonarqube_url}")
-    mcp.run() # Runs with default stdio transport
+    mcp.run(transport="stdio") # Runs with default stdio transport
