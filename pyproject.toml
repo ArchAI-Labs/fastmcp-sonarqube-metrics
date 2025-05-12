@@ -1,0 +1,13 @@
+[project]
+name = "fastmcp-sonarqube-metrics"
+version = "0.0.1"
+description = "An MCP server that interacts with SonarQube for metrics."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastmcp>=2.2.7",
+    "httpx>=0.28.1",
+    "mcp[cli]>=1.7.1",
+    "pydantic>=2.11.4",
+    "python-dotenv>=1.1.0",
+]
