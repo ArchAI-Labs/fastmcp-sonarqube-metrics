@@ -35,6 +35,8 @@ The client included in the project is only for testing how the code works; we re
 ```
 ├── client_test.py - Client application for testing and interacting with the server.
 ├── server.py - Server application exposing tools to retrieve SonarQube metrics.
+├── client_tool.py - Client with a graphical interface to interact with the SonarQube server.
+├── client_langchain.py - Command-line client to interact with the FastMCP server and SonarQube tools via LangChain
 ├── .env - Environment configuration file (stores SonarQube URL and token).
 └── README.md - Project documentation.
 ```
@@ -77,6 +79,12 @@ The `server.py` module defines the FastMCP server that exposes tools for retriev
 
 The `client_test.py` module defines the FastMCP client that interacts with the server. It prompts the user for a SonarQube project key, connects to the server, invokes the `get_sonarqube_metrics` and `get_sonarqube_component_tree_metrics` tools, and displays the results. To use the client, you need to run the `client_test.py` script directly and provide a valid SonarQube project key when prompted.
 
+#### Client_tool (`client_tool.py`)
+The `client_tool.py` module implements the FastMCP client with a Tkinter-based graphical interface to interact with the SonarQube server. On startup, it configures loggers to suppress non-essential messages, loads environment variables, and launches the chat backend (ChatBackend) in the background, which uses an LLM and the MCP tools exposed by the server via stdio. The frontend (ChatGUI) manages the Tkinter window, displays the message history in a scrollable area, and allows the user to send commands to the server—prompting for a valid SonarQube project key when needed. To use the client, simply run the `client_tool.py` script and interact through the GUI.
+
+#### Client_langchain (`client_langchain.py`)
+The `client_langchain.py` module provides a command-line client to interact with the FastMCP server and SonarQube tools via LangChain. On startup, it loads environment variables, and configures the chosen LLM. It establishes a stdio connection to the server (`server.py`), initializes the MCP session, and loads available tools (health check, current and historical metrics, project listing, issue retrieval). A detailed system prompt describes each tool and its parameters. In an interactive loop, it reads user input from the console, updates the message history, invokes the React agent, and prints the formatted response.
+
 ### Example: Integrating the `get_sonarqube_metrics` tool in an external project
 
 To use the `get_sonarqube_metrics` tool in an external project, you can create a client that connects to the FastMCP server and invokes the tool. Here's a basic example:
@@ -107,6 +115,56 @@ if __name__ == "__main__":
 ```
 
 This example demonstrates how to create a client, connect to the server, invoke the `get_sonarqube_metrics` tool with a project key, and process the results. You would need to adapt the `server_path` variable to the actual location of the `server.py` script in your environment.
+
+
+
+## ArchAI-SonarQube Chat (GUI)
+
+A lightweight Tkinter client that connects over stdio to the FastMCP server and exposes a real-time chat interface for querying SonarQube metrics, browsing component trees and running health checks via an LLM-driven assistant.
+
+![img_tool](https://github.com/ArchAI-Labs/fastmcp-sonarqube-metrics/blob/main/img/img_tool.png)
+
+
+## Usage with TRANSPORT=SSE
+You can switch the client’s transport layer to Server-Sent Events (SSE) by setting the `TRANSPORT` environment variable before launching the GUI. This enables real-time, uni-directional updates from the FastMCP server.
+When the server is started in SSE mode, a persistent HTTP connection is opened on port **8001**. This allows you to connect via compatible interfaces such as MCP Inspector.*
+
+1. **Start the server in SSE mode**  
+    ```bash
+   
+   uv run mcp dev "<server_name>" 
+
+   ```
+2. **Open MCP Inspector**
+   A link (e.g. `http://127.0.0.1:6274`) will be provided to launch MCP Inspector in your browser.
+3. **Configure SSE in MCP Inspector**
+
+   * Select **SSE** as the transport type
+   * Enter the URL: `http://localhost:8001/sse`
+
+4. **Initiate the connection**
+
+5. **Browse available tools**
+   In the **Tools** section you will see:
+
+   * `get_status`
+   * `get_sonarqube_metrics`
+   * `get_sonarqube_metrics_history`
+   * `get_sonarqube_component_tree_metrics`
+   * `list_projects`
+   * `get_project_issues`
+
+6. **Select and invoke a tool**
+   For example, choose **get\_project\_issues** and provide:
+
+   * `project_key`: the SonarQube project key
+   * `issue_type` (optional): e.g. `BUG`, `CODE_SMELL`
+   * `severity` (optional): e.g. `MAJOR`, `CRITICAL`
+   * `resolved` (optional): `true` or `false`
+   * `limit` (optional): maximum number of issues to return
+
+7. **Execute and retrieve results**
+   The server will call the appropriate SonarQube API and return a formatted JSON response.
 
 ## Usage with Claude Desktop
 
