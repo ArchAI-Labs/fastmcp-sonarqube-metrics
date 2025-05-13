@@ -1,24 +1,29 @@
-# server.py
 import os
 import httpx
 import json
 from typing import Annotated
 import base64
-
 from dotenv import load_dotenv
-
 from pydantic import Field
-
 from fastmcp import FastMCP
+
+import logging
 from fastmcp.utilities.logging import get_logger
 
 logger = get_logger(__name__)
 
 load_dotenv()
-# Create the FastMCP server instance
+
+# Configure logging to suppress Pydantic schema warnings
+logging.getLogger("pydantic.error_wrappers").setLevel(logging.ERROR)
+logging.getLogger("fastmcp").setLevel(logging.ERROR)
+
+# Create the FastMCP server instance with global config to ignore extra fields
 mcp = FastMCP(
     name="SonarQube MCP",
-    instructions="Provides a tools to retrieve informations about SonarQube projects.",
+    instructions="Provides tools to retrieve information about SonarQube projects.",
+    tool_model_config={"extra": "ignore"},
+    model_config={"extra": "ignore"}
 )
 
 # Define the metric keys we want to fetch
@@ -30,9 +35,8 @@ SONARQUBE_METRIC_KEYS = [
     "duplicated_lines_density",
 ]
 
-
-sonarqube_token=os.environ.get("SONARQUBE_TOKEN")
-sonarqube_url=os.environ.get("SONARQUBE_URL")
+sonarqube_token = os.environ.get("SONARQUBE_TOKEN")
+sonarqube_url = os.environ.get("SONARQUBE_URL")
 
 @mcp.tool()
 async def get_status() -> str:
@@ -528,4 +532,5 @@ async def get_project_issues(
 # Standard entry point to run the server
 if __name__ == "__main__":
     print(f"Starting SonarQube MCP server, configured for {sonarqube_url}")
-    mcp.run(transport="stdio") # Runs with default stdio transport
+    mcp.settings.port = 8001
+    mcp.run(transport=os.environ.get("TRANSPORT"))
