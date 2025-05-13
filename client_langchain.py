@@ -23,19 +23,21 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from langchain_mcp_adapters.tools import load_mcp_tools
 from langgraph.prebuilt import create_react_agent
-#from langchain_openai import ChatOpenAI
+from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 
 load_dotenv()
 
-#enter your model provider (OpenAI or Gemini)
-
-#llm = ChatOpenAI(model="gpt-4o")
-
-llm =ChatGoogleGenerativeAI(
-    model="gemini-2.0-flash", google_api_key=os.environ.get("GEMINI_API_KEY"),
+if "GEMINI_API_KEY" in os.environ:
+    llm = ChatGoogleGenerativeAI(
+        model="gemini-2.0-flash",
+        google_api_key=os.environ.get("GEMINI_API_KEY"),
     )
+elif "OPENAI_API_KEY" in os.environ:
+    llm = ChatOpenAI(model="gpt-4o")
+else:
+    print("GEMINI_API_KEY or a OPENAI_API_KEY is missing")
 
 server_script = Path(__file__).with_name("server.py")
 
@@ -44,6 +46,8 @@ server_params = StdioServerParameters(
     args=[str(server_script)],
     env=os.environ,
 )
+
+
 async def main() -> None:
     async with stdio_client(server_params) as (read, write):
         async with ClientSession(read, write) as session:
@@ -78,6 +82,7 @@ async def main() -> None:
                 ai_msg = result["messages"][-1].content
                 print(ai_msg)
                 history.append({"role": "assistant", "content": ai_msg})
+
 
 if __name__ == "__main__":
     asyncio.run(main())

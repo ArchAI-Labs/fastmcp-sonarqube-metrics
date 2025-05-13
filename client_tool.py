@@ -21,7 +21,7 @@ import threading
 import queue
 from pathlib import Path
 import datetime
-from dotenv import load_dotenv
+
 import tkinter as tk
 from tkinter import Canvas, Entry, Scrollbar, Label, Frame, PhotoImage
 
@@ -30,6 +30,9 @@ from mcp.client.stdio import stdio_client
 from langchain_mcp_adapters.tools import load_mcp_tools
 from langgraph.prebuilt import create_react_agent
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_openai import ChatOpenAI
+
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -38,17 +41,22 @@ SYSTEM_PROMPT = (
     "Provide clear answers using the available tools."
 )
 
+
 class ChatBackend:
     def __init__(self, input_queue, output_queue):
         self.input_queue = input_queue
         self.output_queue = output_queue
         self.history = [{"role": "system", "content": SYSTEM_PROMPT}]
-        self.llm = ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash",
-            google_api_key=os.environ.get("GEMINI_API_KEY"),
-        )
 
-        #self.llm=llm = ChatOpenAI(model="gpt-4o")
+        if "GEMINI_API_KEY" in os.environ:
+            self.llm = ChatGoogleGenerativeAI(
+                model="gemini-2.0-flash",
+                google_api_key=os.environ.get("GEMINI_API_KEY"),
+            )
+        elif "OPENAI_API_KEY" in os.environ:
+            self.llm = ChatOpenAI(model="gpt-4o")
+        else:
+            print("GEMINI_API_KEY or a OPENAI_API_KEY is missing")
         self.server_script = Path(__file__).with_name("server.py")
         self.server_params = StdioServerParameters(
             command="python",
@@ -63,20 +71,26 @@ class ChatBackend:
                 tools = await load_mcp_tools(session)
                 self.agent = create_react_agent(self.llm, tools)
 
-                self.output_queue.put(("AI", "Hi, I'm ArchAI assistant, how can I help you with SonarQube?"))
+                self.output_queue.put(
+                    (
+                        "AI",
+                        "Hi, I'm ArchAI assistant, how can I help you with SonarQube?",
+                    )
+                )
 
                 while True:
                     text = await asyncio.to_thread(self.input_queue.get)
                     if text.lower() in {"exit", "quit"}:
                         break
-                    self.history.append({"role":"user","content":text})
+                    self.history.append({"role": "user", "content": text})
                     result = await self.agent.ainvoke({"messages": self.history})
                     ai_msg = result["messages"][-1].content
-                    self.history.append({"role":"assistant","content": ai_msg})
+                    self.history.append({"role": "assistant", "content": ai_msg})
                     self.output_queue.put(("AI", ai_msg))
 
     def run(self):
         asyncio.run(self.chat_loop())
+
 
 class ChatGUI:
     def __init__(self, root):
@@ -87,7 +101,13 @@ class ChatGUI:
         self.root.geometry("500x500")
         self.root.columnconfigure(0, weight=1)
 
-        header = Label(root, text="ArchAI-SonarQube Chat", font=("Segoe UI", 16, "bold"), bg="#34B7F1", fg="white")
+        header = Label(
+            root,
+            text="ArchAI-SonarQube Chat",
+            font=("Segoe UI", 16, "bold"),
+            bg="#34B7F1",
+            fg="white",
+        )
         header.grid(row=0, column=0, sticky="ew")
 
         # canvas frame
@@ -103,8 +123,11 @@ class ChatGUI:
         self.scrollbar.grid(row=0, column=1, sticky="ns")
 
         self.scrollable = Frame(self.canvas, bg="#E8F7FF")
-        self.canvas.create_window((0,0), window=self.scrollable, anchor="nw")
-        self.scrollable.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
+        self.canvas.create_window((0, 0), window=self.scrollable, anchor="nw")
+        self.scrollable.bind(
+            "<Configure>",
+            lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")),
+        )
 
         # input frame
         input_frame = Frame(root, bg="#E8F7FF")
@@ -112,9 +135,16 @@ class ChatGUI:
         input_frame.columnconfigure(0, weight=1)
 
         self.input_entry = Entry(input_frame, font=("Segoe UI", 12))
-        self.input_entry.grid(row=0, column=0, sticky="ew", padx=(0,5))
+        self.input_entry.grid(row=0, column=0, sticky="ew", padx=(0, 5))
         self.input_entry.bind("<Return>", self.send_message)
-        send_btn = tk.Button(input_frame, text="Send", command=self.send_message, bg="#34B7F1", fg="white", font=("Segoe UI",11))
+        send_btn = tk.Button(
+            input_frame,
+            text="Send",
+            command=self.send_message,
+            bg="#34B7F1",
+            fg="white",
+            font=("Segoe UI", 11),
+        )
         send_btn.grid(row=0, column=1)
 
         self.input_queue = queue.Queue()
@@ -128,7 +158,8 @@ class ChatGUI:
 
     def send_message(self, event=None):
         text = self.input_entry.get().strip()
-        if not text: return
+        if not text:
+            return
         self._add_message("You", text)
         self.input_queue.put(text)
         self.input_entry.delete(0, "end")
@@ -143,13 +174,23 @@ class ChatGUI:
         # timestamp
         now = datetime.datetime.now().strftime("%H:%M")
         # bubble
-        bg = "#D0EDFF" if sender=="You" else "#FFFFFF"
+        bg = "#D0EDFF" if sender == "You" else "#FFFFFF"
         bubble = Frame(self.scrollable, bg=bg, padx=12, pady=8)
-        Label(bubble, text=f"{sender} ({now})", font=("Segoe UI",8,"italic"), bg=bg).pack(anchor="w")
-        Label(bubble, text=text, font=("Segoe UI",11), bg=bg, wraplength=360, justify="left").pack(anchor="w")
-        anchor = "e" if sender=="You" else "w"
+        Label(
+            bubble, text=f"{sender} ({now})", font=("Segoe UI", 8, "italic"), bg=bg
+        ).pack(anchor="w")
+        Label(
+            bubble,
+            text=text,
+            font=("Segoe UI", 11),
+            bg=bg,
+            wraplength=360,
+            justify="left",
+        ).pack(anchor="w")
+        anchor = "e" if sender == "You" else "w"
         bubble.pack(anchor=anchor, pady=4)
         self.canvas.yview_moveto(1.0)
+
 
 if __name__ == "__main__":
     root = tk.Tk()
