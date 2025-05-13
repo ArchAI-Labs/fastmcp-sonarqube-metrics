@@ -62,6 +62,9 @@ The client included in the project is only for testing how the code works; we re
     ```
     SONARQUBE_URL=<your_sonarqube_url>
     SONARQUBE_TOKEN=<your_sonarqube_token>
+    TRANSPORT=<stdio or sse>
+    GEMINI_API_KEY=<your-gemini-api_key>
+    OPENAI_API_KEY=<your-openai-api_key>
     ```
 
     Replace `<your_sonarqube_url>` with the URL of your SonarQube instance (e.g., `http://localhost:9000`) and `<your_sonarqube_token>` with your SonarQube API token.
@@ -131,9 +134,7 @@ When the server is started in SSE mode, a persistent HTTP connection is opened o
 
 1. **Start the server in SSE mode**  
     ```bash
-   
    uv run mcp dev "<server_name>" 
-
    ```
 2. **Open MCP Inspector**
    A link (e.g. `http://127.0.0.1:6274`) will be provided to launch MCP Inspector in your browser.
