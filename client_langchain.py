@@ -26,7 +26,6 @@ from langgraph.prebuilt import create_react_agent
 from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 
-
 load_dotenv()
 
 if "GEMINI_API_KEY" in os.environ:
@@ -37,10 +36,9 @@ if "GEMINI_API_KEY" in os.environ:
 elif "OPENAI_API_KEY" in os.environ:
     llm = ChatOpenAI(model="gpt-4o")
 else:
-    print("GEMINI_API_KEY or a OPENAI_API_KEY is missing")
+    print("GEMINI_API_KEY or OPENAI_API_KEY is missing")
 
 server_script = Path(__file__).with_name("server.py")
-
 server_params = StdioServerParameters(
     command="python",
     args=[str(server_script)],
@@ -56,21 +54,20 @@ async def main() -> None:
             agent = create_react_agent(llm, tools)
 
             history = []
-            system_prompt = (
-                "You are an expert SonarQube assistant. "
-                "You have access to these tools:\n"
-                "- get_status: performs a health check on the SonarQube server.\n"
-                "- get_sonarqube_metrics: retrieves current metrics (bugs, vulnerabilities, code smells, coverage, duplicated lines density) for a specified project.\n"
-                "- get_sonarqube_metrics_history: fetches historical metric data over a given date range.\n"
-                "- get_sonarqube_component_tree_metrics: retrieves metrics for every component (file/directory) in a project, handling pagination automatically.\n"
-                "- list_projects: lists all accessible SonarQube projects, with optional filtering by name or key.\n"
-                "- get_project_issues: fetches project issues (BUG, CODE_SMELL, VULNERABILITY, etc.), filterable by type, severity, and resolution status.\n"
-                "When responding, choose the most appropriate tool and format the call as valid JSON. "
-                "After executing the tool, provide the user with a clear, concise summary of the results."
-            )
+            system_prompt = """
+            You are an expert SonarQube assistant.
+            Your role is to provide the user with clear and concise answers related to SonarQube metrics and projects.
+            After executing a tool, summarize the results in a straightforward manner,
+            without using any markdown formatting such as asterisks or other punctuation for emphasis.
+
+            When listing the project, ensure that there is a space between the different project and delete duplicates.
+            Ensure the output is easy to read and well-structured, with each metric presented on its own line,
+            followed by a space before the next metric and *NO duplicated projects*.
+
+            """
 
             history.append({"role": "system", "content": system_prompt})
-            print("Hi, I'm ArchAI assistent, How can I help you with SonarQube?\n")
+            print("Hi, I'm ArchAI assistant, How can I help you with SonarQube?\n")
 
             while True:
                 user_text = input("> ").strip()
