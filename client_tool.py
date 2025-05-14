@@ -33,7 +33,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-SYSTEM_PROMPT = ("""
+SYSTEM_PROMPT = """
                     You are an expert SonarQube assistant.
                     Your role is to provide the user with clear and concise answers related to SonarQube metrics and projects.
                     After executing a tool, summarize the results in a straightforward manner,
@@ -42,7 +42,8 @@ SYSTEM_PROMPT = ("""
                     Ensure the output is easy to read and well-structured, with each metric presented on its own line,
                     followed by a space before the next metric and *NO duplicated projects*.
                     
-                """ )
+                """
+
 
 class ChatBackend:
     def __init__(self, input_queue, output_queue):
@@ -52,15 +53,17 @@ class ChatBackend:
         if "GEMINI_API_KEY" in os.environ:
             self.llm = ChatGoogleGenerativeAI(
                 model="gemini-2.0-flash",
-                google_api_key=os.environ["GEMINI_API_KEY"]
+                google_api_key=os.environ.get("GEMINI_API_KEY"),
             )
         elif "OPENAI_API_KEY" in os.environ:
             self.llm = ChatOpenAI(model="gpt-4o")
         else:
             print("GEMINI_API_KEY or OPENAI_API_KEY is missing")
-        script = Path(__file__).with_name("server.py")
+        self.server_script = Path(__file__).with_name("server.py")
         self.server_params = StdioServerParameters(
-            command="python", args=[str(script)], env=os.environ
+            command="python", 
+            args=[str(self.server_script)], 
+            env=os.environ
         )
 
     async def chat_loop(self):
@@ -84,6 +87,7 @@ class ChatBackend:
     def run(self):
         asyncio.run(self.chat_loop())
 
+
 class ChatGUI:
     def __init__(self, root):
         self.root = root
@@ -99,7 +103,7 @@ class ChatGUI:
             text="ArchAI-SonarQube Chat",
             font=("Segoe UI", 16, "bold"),
             bg="#34B7F1",
-            fg="white"
+            fg="white",
         ).grid(row=0, column=0, sticky="ew")
 
         # Chat display area
@@ -121,8 +125,8 @@ class ChatGUI:
             "<Configure>",
             lambda e: (
                 self.canvas.configure(scrollregion=self.canvas.bbox("all")),
-                self.canvas.yview_moveto(1.0)
-            )
+                self.canvas.yview_moveto(1.0),
+            ),
         )
 
         # "ArchAI is typing..." indicator
@@ -131,7 +135,7 @@ class ChatGUI:
             text="ArchAI is typing...",
             font=("Segoe UI", 10, "italic"),
             bg="#E8F7FF",
-            fg="#666666"
+            fg="#666666",
         )
         self.typing_label.grid(row=2, column=0, sticky="w", padx=10, pady=(0, 5))
         self.typing_label.grid_remove()
@@ -150,7 +154,7 @@ class ChatGUI:
             command=self.send_message,
             bg="#34B7F1",
             fg="white",
-            font=("Segoe UI", 11)
+            font=("Segoe UI", 11),
         ).grid(row=0, column=1)
 
         self.input_queue = queue.Queue()
@@ -188,10 +192,7 @@ class ChatGUI:
         bg = "#D0EDFF" if sender == "You" else "#FFFFFF"
         bubble = Frame(self.scrollable, bg=bg, padx=12, pady=8)
         Label(
-            bubble,
-            text=f"{sender} ({now})",
-            font=("Segoe UI", 8, "italic"),
-            bg=bg
+            bubble, text=f"{sender} ({now})", font=("Segoe UI", 8, "italic"), bg=bg
         ).pack(anchor="w")
         Label(
             bubble,
@@ -199,13 +200,14 @@ class ChatGUI:
             font=("Segoe UI", 11),
             bg=bg,
             wraplength=360,
-            justify="left"
+            justify="left",
         ).pack(anchor="w")
         side = "e" if sender == "You" else "w"
         bubble.pack(anchor=side, pady=4)
 
         self.canvas.update_idletasks()
         self.canvas.yview_moveto(1.0)
+
 
 if __name__ == "__main__":
     root = tk.Tk()
