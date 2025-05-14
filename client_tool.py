@@ -52,17 +52,15 @@ class ChatBackend:
         if "GEMINI_API_KEY" in os.environ:
             self.llm = ChatGoogleGenerativeAI(
                 model="gemini-2.0-flash",
-                google_api_key=os.environ.get("GEMINI_API_KEY"),
+                google_api_key=os.environ["GEMINI_API_KEY"]
             )
         elif "OPENAI_API_KEY" in os.environ:
             self.llm = ChatOpenAI(model="gpt-4o")
         else:
-            print("GEMINI_API_KEY or a OPENAI_API_KEY is missing")
-        self.server_script = Path(__file__).with_name("server.py")
+            print("GEMINI_API_KEY or OPENAI_API_KEY is missing")
+        script = Path(__file__).with_name("server.py")
         self.server_params = StdioServerParameters(
-            command="python",
-            args=[str(self.server_script)],
-            env=os.environ,
+            command="python", args=[str(script)], env=os.environ
         )
 
     async def chat_loop(self):
