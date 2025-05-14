@@ -21,26 +21,28 @@ import threading
 import queue
 from pathlib import Path
 import datetime
-
 import tkinter as tk
-from tkinter import Canvas, Entry, Scrollbar, Label, Frame, PhotoImage
-
+from tkinter import Canvas, Entry, Scrollbar, Label, Frame
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from langchain_mcp_adapters.tools import load_mcp_tools
 from langgraph.prebuilt import create_react_agent
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI
-
 from dotenv import load_dotenv
 
 load_dotenv()
 
-SYSTEM_PROMPT = (
-    "You are an expert SonarQube assistant. "
-    "Provide clear answers using the available tools."
-)
-
+SYSTEM_PROMPT = ("""
+                    You are an expert SonarQube assistant.
+                    Your role is to provide the user with clear and concise answers related to SonarQube metrics and projects.
+                    After executing a tool, summarize the results in a straightforward manner,
+                    without using any markdown formatting such as asterisks or other punctuation for emphasis.
+                    When listing all project, ensure that there is a space between each project. 
+                    Ensure the output is easy to read and well-structured, with each metric presented on its own line,
+                    followed by a space before the next metric and *NO duplicated projects*.
+                    
+                """ )
 
 class ChatBackend:
     def __init__(self, input_queue, output_queue):
