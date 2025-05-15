@@ -1,0 +1,47 @@
+# Smithery configuration file: https://smithery.ai/docs/build/project-config
+
+startCommand:
+  type: stdio
+  configSchema:
+    # JSON Schema defining the configuration options for the MCP.
+    type: object
+    required:
+      - sonarqubeUrl
+      - sonarqubeToken
+    properties:
+      sonarqubeUrl:
+        type: string
+        description: URL of the SonarQube instance (e.g., http://localhost:9000)
+      sonarqubeToken:
+        type: string
+        description: API token for SonarQube
+      transport:
+        type: string
+        default: stdio
+        description: Transport method for MCP (stdio or sse)
+      openaiApiKey:
+        type: string
+        description: API key for OpenAI (optional)
+      geminiApiKey:
+        type: string
+        description: API key for Gemini (optional)
+  commandFunction:
+    # A JS function that produces the CLI command based on the given config to start the MCP on stdio.
+    |-
+    (config) => ({
+      command: 'python',
+      args: ['server.py'],
+      env: {
+        SONARQUBE_URL: config.sonarqubeUrl,
+        SONARQUBE_TOKEN: config.sonarqubeToken,
+        TRANSPORT: config.transport,
+        ...(config.openaiApiKey ? { OPENAI_API_KEY: config.openaiApiKey } : {}),
+        ...(config.geminiApiKey ? { GEMINI_API_KEY: config.geminiApiKey } : {}),
+      },
+    })
+  exampleConfig:
+    sonarqubeUrl: http://localhost:9000
+    sonarqubeToken: your_dummy_token
+    transport: stdio
+    openaiApiKey: sk-XXXXXXXXXXXXXXXX
+    geminiApiKey: gm-YYYYYYYYYYYY
