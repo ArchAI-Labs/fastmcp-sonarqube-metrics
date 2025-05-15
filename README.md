@@ -1,5 +1,7 @@
 # FastMCP SonarQube Metrics
 
+[![smithery badge](https://smithery.ai/badge/@ArchAI-Labs/fastmcp-sonarqube-metrics)](https://smithery.ai/server/@ArchAI-Labs/fastmcp-sonarqube-metrics)
+
 ![logo](https://github.com/ArchAI-Labs/fastmcp-sonarqube-metrics/blob/main/img/logo.png)
 
 ## Overview
@@ -52,6 +54,14 @@ The client included in the project is only for testing how the code works; we re
 *   httpx installed (`pip install httpx`)
 *   pydantic installed (`pip install pydantic`)
 *   python-dotenv installed (`pip install python-dotenv`)
+
+### Installing via Smithery
+
+To install FastMCP SonarQube Metrics for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@ArchAI-Labs/fastmcp-sonarqube-metrics):
+
+```bash
+npx -y @smithery/cli install @ArchAI-Labs/fastmcp-sonarqube-metrics --client claude
+```
 
 ### General Build Steps
 
