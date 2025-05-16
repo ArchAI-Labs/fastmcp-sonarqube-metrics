@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from pydantic import Field
 from fastmcp import FastMCP
 import logging
+from mcp.server import Server
 from fastmcp.utilities.logging import get_logger
 
 logger = get_logger(__name__)
