@@ -18,7 +18,9 @@ for logger_name in loggers_to_silence:
 import asyncio
 import os
 from dotenv import load_dotenv
-from mcp import ClientSession
+from mcp import ClientSession, StdioServerParameters
+from pathlib import Path
+from mcp.client.stdio import stdio_client
 from langchain_mcp_adapters.tools import load_mcp_tools
 from langgraph.prebuilt import create_react_agent
 from langchain_openai import ChatOpenAI, AzureChatOpenAI
@@ -46,8 +48,20 @@ elif 'AZURE_OPENAI_API_KEY' and 'AZURE_OPENAI_ENDPOINT' in os.environ:
 else:
     print("GEMINI_API_KEY or OPENAI_API_KEY is missing")
 
-async def main():
-    async with sse_client("http://localhost:8001/sse") as (reader, writer):
+async def main() -> None:
+    transport = os.environ.get("TRANSPORT")
+    if transport == "sse":
+        client_cm = sse_client("http://localhost:8001/sse")
+    else:
+        server_script = Path(__file__).with_name("server.py")
+        server_params = StdioServerParameters(
+            command="python",
+            args=[str(server_script)],
+            env=os.environ,
+        )
+        client_cm = stdio_client(server_params)
+
+    async with client_cm as (reader, writer):
         async with ClientSession(reader, writer) as session:
             await session.initialize()
             tools = await load_mcp_tools(session)

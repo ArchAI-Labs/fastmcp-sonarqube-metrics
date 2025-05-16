@@ -19,16 +19,18 @@ import asyncio
 import os
 import threading
 import queue
+from pathlib import Path
 import datetime
 import tkinter as tk
 from tkinter import Canvas, Entry, Scrollbar, Label, Frame
-from mcp import ClientSession
+from dotenv import load_dotenv
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
 from mcp.client.sse import sse_client
 from langchain_mcp_adapters.tools import load_mcp_tools
 from langgraph.prebuilt import create_react_agent
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI, AzureChatOpenAI
-from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -63,13 +65,26 @@ class ChatBackend:
                 temperature=0.7,
                 max_tokens=None,
                 timeout=None,
-                max_retries=2,
+                max_retries=2
             )
         else:
             print("GEMINI_API_KEY or OPENAI_API_KEY is missing")
+        self.server_script = Path(__file__).with_name("server.py")
+        self.server_params = StdioServerParameters(
+            command="python",
+            args=[str(self.server_script)],
+            env=os.environ
+        )
+
 
     async def chat_loop(self):
-        async with sse_client("http://localhost:8001/sse") as (reader, writer):
+        transport = os.environ.get("TRANSPORT")
+        if transport == "sse":
+            client_cm = sse_client("http://localhost:8001/sse")
+        else:
+            client_cm = stdio_client(self.server_params)
+
+        async with client_cm as (reader, writer):
             async with ClientSession(reader, writer) as session:
                 await session.initialize()
                 tools = await load_mcp_tools(session)
