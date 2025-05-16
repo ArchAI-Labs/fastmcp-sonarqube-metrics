@@ -17,14 +17,13 @@ for logger_name in loggers_to_silence:
 
 import asyncio
 import os
-from pathlib import Path
 from dotenv import load_dotenv
-from mcp import ClientSession, StdioServerParameters
-from mcp.client.stdio import stdio_client
+from mcp import ClientSession
 from langchain_mcp_adapters.tools import load_mcp_tools
 from langgraph.prebuilt import create_react_agent
 from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
+from mcp.client.sse import sse_client
 
 load_dotenv()
 
@@ -38,17 +37,9 @@ elif "OPENAI_API_KEY" in os.environ:
 else:
     print("GEMINI_API_KEY or OPENAI_API_KEY is missing")
 
-server_script = Path(__file__).with_name("server.py")
-server_params = StdioServerParameters(
-    command="python",
-    args=[str(server_script)],
-    env=os.environ,
-)
-
-
-async def main() -> None:
-    async with stdio_client(server_params) as (read, write):
-        async with ClientSession(read, write) as session:
+async def main():
+    async with sse_client("http://localhost:8001/sse") as (reader, writer):
+        async with ClientSession(reader, writer) as session:
             await session.initialize()
             tools = await load_mcp_tools(session)
             agent = create_react_agent(llm, tools)
