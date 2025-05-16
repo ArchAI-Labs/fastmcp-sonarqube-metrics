@@ -27,7 +27,7 @@ from mcp.client.sse import sse_client
 from langchain_mcp_adapters.tools import load_mcp_tools
 from langgraph.prebuilt import create_react_agent
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_openai import ChatOpenAI
+from langchain_openai import ChatOpenAI, AzureChatOpenAI
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -56,6 +56,15 @@ class ChatBackend:
             )
         elif "OPENAI_API_KEY" in os.environ:
             self.llm = ChatOpenAI(model="gpt-4o")
+        elif 'AZURE_OPENAI_API_KEY' and 'AZURE_OPENAI_ENDPOINT' in os.environ:
+            self.llm = AzureChatOpenAI(
+                azure_deployment="gpt-4o",  # or your deployment
+                api_version=os.environ.get("AZURE_API_VERSION"),
+                temperature=0.7,
+                max_tokens=None,
+                timeout=None,
+                max_retries=2,
+            )
         else:
             print("GEMINI_API_KEY or OPENAI_API_KEY is missing")
 
