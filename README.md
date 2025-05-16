@@ -125,8 +125,11 @@ This example demonstrates how to create a client, connect to the server, invoke 
 
 A lightweight Tkinter client that connects over stdio to the FastMCP server and exposes a real-time chat interface for querying SonarQube metrics, browsing component trees and running health checks via an LLM-driven assistant.
 
+<br>
+
 ![img_tool](https://github.com/ArchAI-Labs/fastmcp-sonarqube-metrics/blob/main/img/img_tool.png)
 
+<br>
 
 ## Usage with TRANSPORT=SSE
 You can switch the client’s transport layer to Server-Sent Events (SSE) by setting the `TRANSPORT` environment variable before launching the GUI. This enables real-time, uni-directional updates from the FastMCP server.
@@ -199,6 +202,11 @@ You can install this server directly into Claude Desktop using fastmcp:
 
 5. Restart Claude Desktop if it was running. The *"FastMCP SonarQube Metrics"* tool should now be available.
 
+<br>
+
+![claude](https://github.com/ArchAI-Labs/fastmcp-sonarqube-metrics/blob/main/img/img_claude_desktop.png)
+
+<br>
 
 ## Functional Analysis
 
