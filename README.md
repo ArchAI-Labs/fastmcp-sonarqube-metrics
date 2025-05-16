@@ -80,7 +80,7 @@ The `server.py` module defines the FastMCP server that exposes tools for retriev
 
 #### Client (`client_test.py`)
 
-The `client_test.py` module defines the FastMCP client that interacts with the server. It prompts the user for a SonarQube project key, connects to the server, invokes the `get_sonarqube_metrics` and `get_sonarqube_component_tree_metrics` tools, and displays the results. To use the client, you need to run the `client_test.py` script directly and provide a valid SonarQube project key when prompted.
+The `client_test.py` module defines the FastMCP client that interacts with the server. It prompts the user for a SonarQube project key, connects to the server, invokes the `get_sonarqube_metrics` and `get_sonarqube_component_tree_metrics` tools, and displays the results. To use the client, you need to run the `client_test.py` script directly and provide a valid SonarQube project key when prompted and set the transport type in the .env file to *stdio*.
 
 #### Client_tool (`client_tool.py`)
 The `client_tool.py` module implements the FastMCP client with a Tkinter-based graphical interface to interact with the SonarQube server. On startup, it configures loggers to suppress non-essential messages, loads environment variables, and launches the chat backend (ChatBackend) in the background, which uses an LLM and the MCP tools exposed by the server via stdio. The frontend (ChatGUI) manages the Tkinter window, displays the message history in a scrollable area, and allows the user to send commands to the server—prompting for a valid SonarQube project key when needed. To use the client, simply run the `client_tool.py` script and interact through the GUI.
