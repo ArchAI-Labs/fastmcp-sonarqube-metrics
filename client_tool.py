@@ -19,12 +19,11 @@ import asyncio
 import os
 import threading
 import queue
-from pathlib import Path
 import datetime
 import tkinter as tk
 from tkinter import Canvas, Entry, Scrollbar, Label, Frame
-from mcp import ClientSession, StdioServerParameters
-from mcp.client.stdio import stdio_client
+from mcp import ClientSession
+from mcp.client.sse import sse_client
 from langchain_mcp_adapters.tools import load_mcp_tools
 from langgraph.prebuilt import create_react_agent
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -58,14 +57,10 @@ class ChatBackend:
             self.llm = ChatOpenAI(model="gpt-4o")
         else:
             print("GEMINI_API_KEY or OPENAI_API_KEY is missing")
-        script = Path(__file__).with_name("server.py")
-        self.server_params = StdioServerParameters(
-            command="python", args=[str(script)], env=os.environ
-        )
 
     async def chat_loop(self):
-        async with stdio_client(self.server_params) as (read, write):
-            async with ClientSession(read, write) as session:
+        async with sse_client("http://localhost:8001/sse") as (reader, writer):
+            async with ClientSession(reader, writer) as session:
                 await session.initialize()
                 tools = await load_mcp_tools(session)
                 self.agent = create_react_agent(self.llm, tools)
@@ -124,7 +119,6 @@ class ChatGUI:
                 self.canvas.yview_moveto(1.0)
             )
         )
-
         # "ArchAI is typing..." indicator
         self.typing_label = Label(
             root,

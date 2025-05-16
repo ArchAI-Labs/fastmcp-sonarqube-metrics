@@ -6,8 +6,9 @@ import base64
 from dotenv import load_dotenv
 from pydantic import Field
 from fastmcp import FastMCP
-
+from mcp.server.sse import SseServerTransport
 import logging
+from mcp.server import Server
 from fastmcp.utilities.logging import get_logger
 
 logger = get_logger(__name__)
@@ -71,7 +72,6 @@ async def get_status() -> str:
                 return "🟡 SonarQube server is restarting..."
             else:
                 return f"⚠️ SonarQube status: {status}"
-            
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 401:
                 logger.error("Authentication failed (401). Check token.")
@@ -118,7 +118,6 @@ async def get_sonarqube_metrics(
     if sonarqube_token:
         # auth = sonarqube_token # HTTP Basic Auth: token as user, empty password
         base64_token = base64.b64encode(f"{sonarqube_token}:".encode()).decode("utf-8")
-    
     headers = {"Accept": "application/json",
                "Authorization": f"Basic {base64_token}"}
 
@@ -268,7 +267,7 @@ async def get_sonarqube_metrics_history(
 async def get_sonarqube_component_tree_metrics(
     project_key: Annotated[str, Field(description="The unique key of the project in SonarQube (e.g., 'my-org_my-repo').")],
     metric_keys: Annotated[list[str], Field(description="List of metric keys to fetch (e.g., 'coverage', 'bugs', etc.).")],
-    component_type: Annotated[str | None, Field(description="Optional SonarQube component type to filter by (e.g., 'FILE', 'DIRECTORY', 'MODULE').")] = None,
+    component_type: Annotated[str | None, Field(description="Optional SonarQube component type to filter by (e.g., 'DIR', 'FIL', 'UTS').")] = None,
     page_size: Annotated[int, Field(description="Number of components per page. Defaults to 10.")] = 10
 ) -> dict:
     """
@@ -527,7 +526,6 @@ async def get_project_issues(
         except Exception as e:
             logger.error(f"Unexpected error: {e}", exc_info=True)
             return {"error": f"Unexpected error: {str(e)}"}
-
 
 # Standard entry point to run the server
 if __name__ == "__main__":
