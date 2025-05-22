@@ -75,7 +75,7 @@ The client included in the project is only for testing how the code works; we re
     TRANSPORT=<stdio or sse>
     AZURE_OPENAI_API_KEY=<your-azureopenai-api_key>
     AZURE_OPENAI_ENDPOINT=<your-azureopenai-endpoint>
-    AZURE_DEPLOYMENT=<your-azureopenai-deployment> (optional)
+    AZURE_DEPLOYMENT=<your-azureopenai-deployment>
     AZURE_API_VERSION=<your-azureopenai-api_version>
     ```
 
