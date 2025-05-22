@@ -64,7 +64,19 @@ The client included in the project is only for testing how the code works; we re
     SONARQUBE_TOKEN=<your_sonarqube_token>
     TRANSPORT=<stdio or sse>
     GEMINI_API_KEY=<your-gemini-api_key>
-    OPENAI_API_KEY=<your-openai-api_key>
+    GEMINI_MODEL=<your-gemini-model> (Optional)
+    ```
+
+    The schema is the same for *OpenAI* and *Groq*, if you want to use *AzureOpenAI*:
+
+    ```
+    SONARQUBE_URL=<your_sonarqube_url>
+    SONARQUBE_TOKEN=<your_sonarqube_token>
+    TRANSPORT=<stdio or sse>
+    AZURE_OPENAI_API_KEY=<your-azureopenai-api_key>
+    AZURE_OPENAI_ENDPOINT=<your-azureopenai-endpoint>
+    AZURE_DEPLOYMENT=<your-azureopenai-deployment> (optional)
+    AZURE_API_VERSION=<your-azureopenai-api_version>
     ```
 
     Replace `<your_sonarqube_url>` with the URL of your SonarQube instance (e.g., `http://localhost:9000`) and `<your_sonarqube_token>` with your SonarQube API token.
