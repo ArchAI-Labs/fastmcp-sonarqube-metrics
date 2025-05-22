@@ -30,15 +30,25 @@ from mcp.client.sse import sse_client
 load_dotenv()
 
 if "GEMINI_API_KEY" in os.environ:
-    llm = ChatGoogleGenerativeAI(
-        model="gemini-2.0-flash",
+    self.llm = ChatGoogleGenerativeAI(
+        model=os.environ.get("GEMINI_MODEL", "gemini-2.0-flash"),
         google_api_key=os.environ.get("GEMINI_API_KEY"),
     )
-elif "OPENAI_API_KEY"in os.environ:
-    llm = ChatOpenAI(model="gpt-4o")
-elif 'AZURE_OPENAI_API_KEY' and 'AZURE_OPENAI_ENDPOINT' in os.environ:
-    llm = AzureChatOpenAI(
-        azure_deployment="gpt-4o",  # or your deployment
+elif "OPENAI_API_KEY" in os.environ:
+    self.llm = ChatOpenAI(model=os.environ.get("OPENAI_MODEL", "gpt-4o"))
+elif "GROQ_API_KEY" in os.environ:
+    self.llm = ChatGroq(
+        model=os.environ.get("GROQ_MODEL", "gemma2-9b-it"),
+        temperature=0.7,
+        max_tokens=None,
+        timeout=None,
+        max_retries=2,
+    )
+elif "AZURE_OPENAI_API_KEY" and "AZURE_OPENAI_ENDPOINT" in os.environ:
+    self.llm = AzureChatOpenAI(
+        azure_deployment=os.environ.get(
+            "AZURE_DEPLOYMENT", "gpt-4o"
+        ),  # or your deployment
         api_version=os.environ.get("AZURE_API_VERSION"),
         temperature=0.7,
         max_tokens=None,
@@ -46,7 +56,8 @@ elif 'AZURE_OPENAI_API_KEY' and 'AZURE_OPENAI_ENDPOINT' in os.environ:
         max_retries=2,
     )
 else:
-    print("GEMINI_API_KEY or OPENAI_API_KEY is missing")
+    print("Provider _API_KEY is missing")
+
 
 async def main() -> None:
     transport = os.environ.get("TRANSPORT")

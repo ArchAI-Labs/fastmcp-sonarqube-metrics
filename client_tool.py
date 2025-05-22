@@ -31,6 +31,7 @@ from langchain_mcp_adapters.tools import load_mcp_tools
 from langgraph.prebuilt import create_react_agent
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI, AzureChatOpenAI
+from langchain_groq import ChatGroq
 
 load_dotenv()
 
@@ -53,29 +54,36 @@ class ChatBackend:
         self.history = [{"role": "system", "content": SYSTEM_PROMPT}]
         if "GEMINI_API_KEY" in os.environ:
             self.llm = ChatGoogleGenerativeAI(
-                model="gemini-2.0-flash",
+                model=os.environ.get("GEMINI_MODEL", "gemini-2.0-flash"),
                 google_api_key=os.environ.get("GEMINI_API_KEY"),
             )
         elif "OPENAI_API_KEY" in os.environ:
-            self.llm = ChatOpenAI(model="gpt-4o")
-        elif 'AZURE_OPENAI_API_KEY' and 'AZURE_OPENAI_ENDPOINT' in os.environ:
+            self.llm = ChatOpenAI(model=os.environ.get("OPENAI_MODEL", "gpt-4o"))
+        elif "GROQ_API_KEY" in os.environ:
+            self.llm = ChatGroq(
+                model=os.environ.get("GROQ_MODEL", "gemma2-9b-it"),
+                temperature=0.7,
+                max_tokens=None,
+                timeout=None,
+                max_retries=2,
+            )
+        elif "AZURE_OPENAI_API_KEY" and "AZURE_OPENAI_ENDPOINT" in os.environ:
             self.llm = AzureChatOpenAI(
-                azure_deployment="gpt-4o",  # or your deployment
+                azure_deployment=os.environ.get(
+                    "AZURE_DEPLOYMENT", "gpt-4o"
+                ),  # or your deployment
                 api_version=os.environ.get("AZURE_API_VERSION"),
                 temperature=0.7,
                 max_tokens=None,
                 timeout=None,
-                max_retries=2
+                max_retries=2,
             )
         else:
-            print("GEMINI_API_KEY or OPENAI_API_KEY is missing")
+            print("Provider _API_KEY is missing")
         self.server_script = Path(__file__).with_name("server.py")
         self.server_params = StdioServerParameters(
-            command="python",
-            args=[str(self.server_script)],
-            env=os.environ
+            command="python", args=[str(self.server_script)], env=os.environ
         )
-
 
     async def chat_loop(self):
         transport = os.environ.get("TRANSPORT")
