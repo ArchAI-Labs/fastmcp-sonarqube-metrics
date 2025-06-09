@@ -7,7 +7,6 @@ from dotenv import load_dotenv
 from pydantic import Field
 from fastmcp import FastMCP
 import logging
-from mcp.server import Server
 from fastmcp.utilities.logging import get_logger
 
 logger = get_logger(__name__)
@@ -37,6 +36,18 @@ SONARQUBE_METRIC_KEYS = [
 
 sonarqube_token = os.environ.get("SONARQUBE_TOKEN")
 sonarqube_url = os.environ.get("SONARQUBE_URL")
+
+def get_auth_headers():
+    """Helper function to get the authorization headers."""
+    if not sonarqube_token:
+        raise ValueError("SONARQUBE_TOKEN environment variable is not set.")
+    base64_token = base64.b64encode(f"{sonarqube_token}:".encode()).decode("utf-8")
+    return {
+        "Accept": "application/json",
+        "Authorization": f"Basic {base64_token}"
+    }
+
+
 
 @mcp.tool()
 async def get_status() -> str:
@@ -93,6 +104,107 @@ async def get_status() -> str:
         except Exception as e:
             logger.error(f"Unexpected error during health check: {e}", exc_info=True)
             return f"Unexpected error: {str(e)}"
+
+@mcp.tool()
+async def create_sonarqube_project(
+    project_key: Annotated[str, Field(description="The unique key for the new SonarQube project (e.g., 'my-new-project'). Must be unique.")],
+    project_name: Annotated[str, Field(description="The name of the new SonarQube project.")],
+    visibility: Annotated[str, Field(description="Project visibility (public or private). Default: private.", enum=["public", "private"])] = "private"
+) -> str:
+    """
+    Creates a new SonarQube project.  Requires administrator privileges.
+    """
+    logger.info(f"Creating SonarQube project: key={project_key}, name={project_name}, visibility={visibility}")
+
+    headers = get_auth_headers()
+    api_url = f"{sonarqube_url}/api/projects/create"
+    params = {
+        "name": project_name,
+        "project": project_key,
+        "visibility": visibility
+    }
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(api_url, headers=headers, params=params, timeout=10)
+            response.raise_for_status() # Raise HTTPStatusError for bad responses
+
+            logger.info(f"Project '{project_key}' created successfully.")
+            return f"Project '{project_name}' (key: '{project_key}') created successfully."
+
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 400:
+                error_detail = e.response.json().get("errors", [{}])[0].get("msg", "Unknown error")
+                logger.error(f"Failed to create project (400): {error_detail}")
+                raise ValueError(f"Failed to create project. Error: {error_detail}") from e
+            elif e.response.status_code == 401:
+                logger.error("Authentication failed (401). Check token permissions.")
+                raise PermissionError("Authentication failed.  Check your token's permissions (must be admin).") from e
+            elif e.response.status_code == 403:
+                logger.error("Access denied (403). Insufficient permissions.")
+                raise PermissionError("Access denied.  Your token lacks the necessary permissions (must be admin).") from e
+            else:
+                logger.error(f"SonarQube API error creating project: {e.response.status_code} - {e.response.text}")
+                raise RuntimeError(f"SonarQube API error: {e.response.status_code} - {e.response.text}") from e
+        except httpx.RequestError as e:
+            logger.error(f"Network error connecting to SonarQube: {e}")
+            raise ConnectionError(f"Could not connect to SonarQube at {sonarqube_url}") from e
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to decode JSON response: {e}. Response text: {e.response.text if 'e.response' in locals() else 'No response'}")
+            raise ValueError("Received invalid JSON response from SonarQube.") from e
+        except Exception as e:
+            logger.error(f"Unexpected error creating project: {e}", exc_info=True)
+            raise RuntimeError("An unexpected error occurred.") from e
+
+@mcp.tool()
+async def delete_sonarqube_project(
+    project_key: Annotated[str, Field(description="The unique key of the SonarQube project to delete (e.g., 'my-project-key'). Requires administrator privileges.")],
+) -> str:
+    """
+    Deletes a SonarQube project.  Requires administrator privileges.  USE WITH CAUTION!
+    """
+    logger.warning(f"Attempting to delete SonarQube project: {project_key}")  # Use warning, to make it visible
+
+    headers = get_auth_headers()
+    api_url = f"{sonarqube_url}/api/projects/delete"
+    params = {
+        "key": project_key
+    }
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(api_url, headers=headers, params=params, timeout=10)
+            response.raise_for_status()
+
+            logger.warning(f"Project '{project_key}' has been deleted.")  # Also warning, because it's destructive
+            return f"Project '{project_key}' has been deleted."
+
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 400:
+                error_detail = e.response.json().get("errors", [{}])[0].get("msg", "Unknown error")
+                logger.error(f"Failed to delete project (400): {error_detail}")
+                raise ValueError(f"Failed to delete project. Error: {error_detail}") from e
+            elif e.response.status_code == 401:
+                logger.error("Authentication failed (401). Check token permissions.")
+                raise PermissionError("Authentication failed.  Check your token's permissions (must be admin).") from e
+            elif e.response.status_code == 403:
+                logger.error("Access denied (403). Insufficient permissions.")
+                raise PermissionError("Access denied.  Your token lacks the necessary permissions (must be admin).") from e
+            elif e.response.status_code == 404:
+                 logger.error(f"Project '{project_key}' not found (404).")
+                 raise ValueError(f"Project '{project_key}' not found.") from e
+            else:
+                logger.error(f"SonarQube API error deleting project: {e.response.status_code} - {e.response.text}")
+                raise RuntimeError(f"SonarQube API error: {e.response.status_code} - {e.response.text}") from e
+        except httpx.RequestError as e:
+            logger.error(f"Network error connecting to SonarQube: {e}")
+            raise ConnectionError(f"Could not connect to SonarQube at {sonarqube_url}") from e
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to decode JSON response: {e}. Response text: {e.response.text if 'e.response' in locals() else 'No response'}")
+            raise ValueError("Received invalid JSON response from SonarQube.") from e
+        except Exception as e:
+            logger.error(f"Unexpected error deleting project: {e}", exc_info=True)
+            raise RuntimeError("An unexpected error occurred.") from e
 
 @mcp.tool()
 async def get_sonarqube_metrics(
