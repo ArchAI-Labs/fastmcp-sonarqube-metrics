@@ -17,6 +17,8 @@ The client included in the project is only for testing how the code works; we re
 ## Supported MCP Tools
 
 * `get_status`: Performs a health check on the configured SonarQube instance.
+* `create_sonarqube_project`: Creates a new SonarQube project.  Requires administrator privileges.
+* `delete_sonarqube_project`: Deletes a SonarQube project.  Requires administrator privileges. **USE WITH CAUTION!**
 * `list_projects`: Lists all accessible SonarQube projects, optionally filtered by name or key.
 * `get_sonarqube_metrics`: Retrieves specified metrics (bugs, vulnerabilities, code smells, coverage, duplication density) for a given SonarQube project key.
 * `get_sonarqube_metrics_history`: Retrieves historical metrics (bugs, vulnerabilities, code smells, coverage, duplication density) for a given SonarQube project using /api/measures/search_history. Optional date filters can be applied.

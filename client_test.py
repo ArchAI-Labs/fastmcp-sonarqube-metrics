@@ -243,6 +243,45 @@ async def run_test(project_key: str):
         print(
             "Check if the server script can run independently and if dependencies are met."
         )
+    
+    # DANGER ZONE! UNCOMMENT TO TRY IT!
+    
+    # try:
+    #     async with client:
+    #         print("\n--- Testing create_sonarqube_project ---")
+    #         new_project_key = "test-project-mcp-delete-me"  # Unique key
+    #         new_project_name = "Test Project MCP Delete Me"
+    #         result_create = await client.call_tool(
+    #             "create_sonarqube_project",
+    #             {"project_key": new_project_key, "project_name": new_project_name, "visibility": "private"},
+    #         )
+    #         print(f"Create project result: {result_create}")
+
+    # except ClientError as e:
+    #     print(f"\n--- MCP Client Error during project creation ---")
+    #     print(f"Error: {e}")
+    # except Exception as e:
+    #     print(f"\n--- An Unexpected Error Occurred during project creation---")
+    #     print(f"Error type: {type(e).__name__}")
+    #     print(f"Error details: {e}")
+    
+
+    # try:
+    #     async with client:
+    #         print("\n--- Testing delete_sonarqube_project (USE WITH CAUTION) ---")
+    #         project_to_delete = new_project_key
+    #         result_delete = await client.call_tool(
+    #             "delete_sonarqube_project", {"project_key": project_to_delete}
+    #         )
+    #         print(f"Delete project result: {result_delete}")
+
+    # except ClientError as e:
+    #     print(f"\n--- MCP Client Error during project deletion---")
+    #     print(f"Error: {e}")
+    # except Exception as e:
+    #     print(f"\n--- An Unexpected Error Occurred during project deletion---")
+    #     print(f"Error type: {type(e).__name__}")
+    #     print(f"Error details: {e}")
 
     print("\n--- Test Complete ---")
 
