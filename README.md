@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/archai-labs-fastmcp-sonarqube-metrics-badge.png)](https://mseep.ai/app/archai-labs-fastmcp-sonarqube-metrics)
+
 # FastMCP SonarQube Metrics
 
 ![logo](https://github.com/ArchAI-Labs/fastmcp-sonarqube-metrics/blob/main/img/logo.png)
