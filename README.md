@@ -2,6 +2,8 @@
 
 [![Trust Score](https://archestra.ai/mcp-catalog/api/badge/quality/ArchAI-Labs/fastmcp-sonarqube-metrics)](https://archestra.ai/mcp-catalog/archai-labs__fastmcp-sonarqube-metrics)
 
+[![smithery badge](https://smithery.ai/badge/@ArchAI-Labs/fastmcp-sonarqube-metrics)](https://smithery.ai/server/@ArchAI-Labs/fastmcp-sonarqube-metrics)
+
 ![logo](https://github.com/ArchAI-Labs/fastmcp-sonarqube-metrics/blob/main/img/logo.png)
 
 ## Overview
@@ -87,6 +89,14 @@ The client included in the project is only for testing how the code works; we re
 4.  **Run the server:** `python server.py`
 5.  **Run the client:** `python client_test.py` *(Optionally, only for test)*
 6.  **Connect to your client:** follow the [official documentation](https://modelcontextprotocol.io/quickstart/user#windows)
+
+### Installing via Smithery
+
+To install FastMCP SonarQube Metrics for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@ArchAI-Labs/fastmcp-sonarqube-metrics):
+
+```bash
+npx -y @smithery/cli install @ArchAI-Labs/fastmcp-sonarqube-metrics --client claude
+```
 
 ### Module Usage
 
