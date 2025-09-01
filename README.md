@@ -1,8 +1,6 @@
 # FastMCP SonarQube Metrics
 
-[![Trust Score](https://archestra.ai/mcp-catalog/api/badge/quality/ArchAI-Labs/fastmcp-sonarqube-metrics)](https://archestra.ai/mcp-catalog/archai-labs__fastmcp-sonarqube-metrics)
-
-[![smithery badge](https://smithery.ai/badge/@ArchAI-Labs/fastmcp-sonarqube-metrics)](https://smithery.ai/server/@ArchAI-Labs/fastmcp-sonarqube-metrics)
+[![Trust Score](https://archestra.ai/mcp-catalog/api/badge/quality/ArchAI-Labs/fastmcp-sonarqube-metrics)](https://archestra.ai/mcp-catalog/archai-labs__fastmcp-sonarqube-metrics) [![smithery badge](https://smithery.ai/badge/@ArchAI-Labs/fastmcp-sonarqube-metrics)](https://smithery.ai/server/@ArchAI-Labs/fastmcp-sonarqube-metrics)
 
 ![logo](https://github.com/ArchAI-Labs/fastmcp-sonarqube-metrics/blob/main/img/logo.png)
 
