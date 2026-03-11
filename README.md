@@ -1,6 +1,7 @@
 # FastMCP SonarQube Metrics
 
 [![Trust Score](https://archestra.ai/mcp-catalog/api/badge/quality/ArchAI-Labs/fastmcp-sonarqube-metrics)](https://archestra.ai/mcp-catalog/archai-labs__fastmcp-sonarqube-metrics)
+[![MCPAmpel](https://img.shields.io/endpoint?url=https://mcpampel.com/badge/archai-labs/fastmcp-sonarqube-metrics.json)](https://mcpampel.com/repo/archai-labs/fastmcp-sonarqube-metrics)
 
 ![logo](https://github.com/ArchAI-Labs/fastmcp-sonarqube-metrics/blob/main/img/logo.png)
 
