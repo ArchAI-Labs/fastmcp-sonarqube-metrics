@@ -16,6 +16,10 @@ The client included in the project is only for testing how the code works; we re
 
 > ***REMEMBER, THIS REPO IS WORK IN PROGRESS, SOME FEATURES MAY NOT BE PERFECT.***
 
+## Hosted deployment
+
+A hosted deployment is available on [Fronteir AI](https://fronteir.ai/mcp/archai-labs-fastmcp-sonarqube-metrics).
+
 ## Supported MCP Tools
 
 * `get_status`: Performs a health check on the configured SonarQube instance.
